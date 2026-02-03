@@ -1,0 +1,33 @@
+### Gradle
+.gradle/
+build/
+**/build/
+
+### Android
+*.apk
+*.ap_
+*.aab
+*.aar
+*.dex
+*.class
+*.keystore
+*.jks
+*.jar
+**/local.properties
+**/captures/
+
+### Kotlin/Java
+*.log
+hs_err_pid*
+replay_pid*
+
+### IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+### OS
+.DS_Store
+Thumbs.db
