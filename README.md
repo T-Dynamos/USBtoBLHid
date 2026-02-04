@@ -33,6 +33,18 @@ Turn your wired USB keyboard and mouse into a Bluetooth keyboard and mouse by us
 - Bluetooth need be enabled and device set discoverable to pair.
 - USB OTG and HUB needed for keyboard or mouse.
 
+## Test footage
+
+Playing minecraft bedrock (PE) with this project.
+
+HUB, mouse and keyboard are connected to another device nearby.
+
+
+
+https://github.com/user-attachments/assets/ec3bac91-e6c7-4435-839c-e7046f9011a0
+
+
+
 ## Build
 
 Use Gradle version 7.3.3.  
