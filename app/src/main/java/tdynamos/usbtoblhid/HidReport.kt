@@ -1,6 +1,6 @@
-package com.blackshark.hidperipheral
+package tdynamos.usbtoblhid
 
-import com.blackshark.hidperipheral.HidReport.DeviceType
+import tdynamos.usbtoblhid.HidReport.DeviceType
 
 class HidReport(var deviceType: DeviceType, var ReportId: Byte, var ReportData: ByteArray) {
     enum class DeviceType {

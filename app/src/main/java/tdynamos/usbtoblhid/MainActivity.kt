@@ -1,4 +1,4 @@
-package com.blackshark.hidperipheral
+package tdynamos.usbtoblhid
 
 import android.Manifest
 import android.app.Activity
@@ -11,7 +11,7 @@ import android.hardware.input.InputManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import com.blackshark.hidperipheral.databinding.ActivityMainBinding
+import tdynamos.usbtoblhid.databinding.ActivityMainBinding
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -21,6 +21,9 @@ import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
 import kotlin.math.roundToInt
+
+import android.util.Log;
+
 
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -57,10 +60,13 @@ class MainActivity : AppCompatActivity(), HidUtils.ConnectionStateChangeListener
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         inputManager = getSystemService(InputManager::class.java)
+        inputManager.registerInputDeviceListener(inputDeviceListener, null)
 
         binding.root.isFocusableInTouchMode = true
         binding.root.requestFocus()
+        
 
         if (Build.VERSION.SDK_INT >= 31 && !hasPermission(Manifest.permission.BLUETOOTH_CONNECT)) {
             connectPermission.launch(Manifest.permission.BLUETOOTH_CONNECT)
@@ -68,23 +74,11 @@ class MainActivity : AppCompatActivity(), HidUtils.ConnectionStateChangeListener
             bluetoothPermission.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
         } else {
             discoverPermission.launch(Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE))
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                binding.root.requestPointerCapture()
-            }
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             binding.root.setOnCapturedPointerListener { _, event ->
-                if (!HidUtils.isConnected()) return@setOnCapturedPointerListener false
                 handleCapturedPointer(event)
-            }
-
-            binding.root.setOnLongClickListener {
-                if (pointerCaptured) {
-                    binding.root.releasePointerCapture()
-                } else {
-                    binding.root.requestPointerCapture()
-                }
                 true
             }
         }
@@ -110,21 +104,12 @@ class MainActivity : AppCompatActivity(), HidUtils.ConnectionStateChangeListener
         }
     }
 
-    override fun onPointerCaptureChanged(hasCapture: Boolean) {
-        super.onPointerCaptureChanged(hasCapture)
-        pointerCaptured = hasCapture
-        if (hasCapture) {
-            lastMouseX = null
-            lastMouseY = null
-        }
-    }
-
-
     private fun start() {
         HidUtils.registerApp(applicationContext)
         HidConsts.reporters(applicationContext)
         HidUtils.connectionStateChangeListener = this
     }
+
 
     override fun onConnecting() {
     }
@@ -133,7 +118,6 @@ class MainActivity : AppCompatActivity(), HidUtils.ConnectionStateChangeListener
         if (Build.VERSION.SDK_INT >= 31 && ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
             return
         }
-
         GlobalScope.launch(Dispatchers.Main) {
             binding.tvConnectStatus.text = "${getString(R.string.connected)} : ${HidUtils.mDevice!!.name}"
         }
@@ -147,11 +131,13 @@ class MainActivity : AppCompatActivity(), HidUtils.ConnectionStateChangeListener
 
     }
 
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (!HidUtils.isConnected()) {
             return super.dispatchKeyEvent(event)
         }
 
+        // Send to HID keyboard handler
         if (handleKeyboardEvent(event)) {
             return true
         }
@@ -159,49 +145,14 @@ class MainActivity : AppCompatActivity(), HidUtils.ConnectionStateChangeListener
         return super.dispatchKeyEvent(event)
     }
 
-    private fun handleCapturedPointer(event: MotionEvent): Boolean {
-        val buttonState = event.buttonState
-        val left = buttonState and MotionEvent.BUTTON_PRIMARY != 0
-        val right = buttonState and MotionEvent.BUTTON_SECONDARY != 0
-        val middle = buttonState and MotionEvent.BUTTON_TERTIARY != 0
-
-        when (event.actionMasked) {
-            MotionEvent.ACTION_HOVER_MOVE,
-            MotionEvent.ACTION_MOVE -> {
-                val dx = event.x.roundToInt()
-                val dy = event.y.roundToInt()
-                if (dx != 0 || dy != 0) {
-                    HidConsts.mouseMove(dx, dy, 0, left, right, middle)
-                }
-            }
-            MotionEvent.ACTION_BUTTON_PRESS,
-            MotionEvent.ACTION_BUTTON_RELEASE,
-            MotionEvent.ACTION_DOWN,
-            MotionEvent.ACTION_UP -> {
-                HidConsts.mouseMove(0, 0, 0, left, right, middle)
-            }
-            MotionEvent.ACTION_SCROLL -> {
-                val vScroll = event.getAxisValue(MotionEvent.AXIS_VSCROLL).roundToInt() * scrollScale
-                val hScroll = event.getAxisValue(MotionEvent.AXIS_HSCROLL).roundToInt() * scrollScale
-                val wheel = if (vScroll != 0) vScroll else hScroll
-                if (wheel != 0) {
-                    HidConsts.mouseMove(0, 0, wheel, left, right, middle)
-                }
-            }
-        }
-
-        return true
-    }
-
     private fun handleKeyboardEvent(event: KeyEvent): Boolean {
-        if (event.device?.isVirtual == true) {
-            return false
-        }
+        val device = event.device ?: return false
+        if (device.isVirtual) return false
 
-        if (event.repeatCount > 0) {
-            return true
-        }
+        // Ignore repeats; multi-key presses will be tracked in the buffer
+        if (event.repeatCount > 0) return true
 
+        // Handle modifier keys first
         val modifierMask = InputHidMapper.keyCodeToModifierMask(event.keyCode)
         if (modifierMask != null) {
             if (event.action == KeyEvent.ACTION_DOWN) {
@@ -212,28 +163,76 @@ class MainActivity : AppCompatActivity(), HidUtils.ConnectionStateChangeListener
             return true
         }
 
+        // Handle regular keys
         val usage = InputHidMapper.keyCodeToHidUsage(event.keyCode) ?: return false
         if (event.action == KeyEvent.ACTION_DOWN) {
-            HidConsts.kbdKeyDown(usage.toString())
+            HidConsts.kbdKeyDown(usage.toString())  // Adds key to KeyBuffer
         } else if (event.action == KeyEvent.ACTION_UP) {
-            HidConsts.kbdKeyUp(usage.toString())
+            HidConsts.kbdKeyUp(usage.toString())    // Removes key from KeyBuffer
         }
+
         return true
     }
 
+    private fun handleCapturedPointer(event: MotionEvent): Boolean {
 
+        // Current button states
+        val bs = event.buttonState
+        val left   = bs and MotionEvent.BUTTON_PRIMARY   != 0
+        val right  = bs and MotionEvent.BUTTON_SECONDARY != 0
+        val middle = bs and MotionEvent.BUTTON_TERTIARY  != 0
+        
+        when (event.actionMasked) {
+
+            MotionEvent.ACTION_MOVE,
+            MotionEvent.ACTION_HOVER_MOVE -> {
+                // Use relative motion for smooth fractional accumulation
+                val dx = event.getAxisValue(MotionEvent.AXIS_RELATIVE_X)
+                val dy = event.getAxisValue(MotionEvent.AXIS_RELATIVE_Y)
+                // Send via optimized mouseMove function
+                if (!HidUtils.isConnected()) return true
+                HidConsts.mouseMove(dx, dy, 0f, left, right, middle)
+            }
+
+            MotionEvent.ACTION_SCROLL -> {
+                // Vertical and horizontal scroll (round to int)
+                val vScroll = event.getAxisValue(MotionEvent.AXIS_VSCROLL)
+                val hScroll = event.getAxisValue(MotionEvent.AXIS_HSCROLL)
+                val wheel = if (vScroll != 0f) vScroll else hScroll
+
+                if (wheel != 0f) {
+                    if (!HidUtils.isConnected()) return true
+                    HidConsts.mouseMove(0f, 0f, wheel, left, right, middle)
+                }
+            }
+
+            MotionEvent.ACTION_BUTTON_PRESS,
+            MotionEvent.ACTION_BUTTON_RELEASE,
+            MotionEvent.ACTION_DOWN,
+            MotionEvent.ACTION_UP -> {
+                // Only button state changed
+                if (!HidUtils.isConnected()) return true
+                HidConsts.mouseMove(0f, 0f, 0f, left, right, middle)
+            }
+        }
+
+        return true
+    }
+    
+    // mouse requestPointerCapture
     private val inputDeviceListener = object : InputManager.InputDeviceListener {
         override fun onInputDeviceAdded(deviceId: Int) {
+            Log.i("MDEBUG", "MOUSE_ID: " + deviceId.toString());
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 if (isMouseDevice(deviceId)) {
                     binding.root.post { binding.root.requestPointerCapture() }
                 }
             }
         }
-
-        override fun onInputDeviceRemoved(deviceId: Int) {}
-
-        override fun onInputDeviceChanged(deviceId: Int) {}
+        override fun onInputDeviceRemoved(deviceId: Int) {
+        }
+        override fun onInputDeviceChanged(deviceId: Int) {
+        }
     }
 
     private fun hasMouseDevice(): Boolean {

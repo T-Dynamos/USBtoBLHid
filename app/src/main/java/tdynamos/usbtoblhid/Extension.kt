@@ -1,4 +1,4 @@
-package com.blackshark.hidperipheral
+package tdynamos.usbtoblhid
 
 import android.bluetooth.BluetoothManager
 import android.content.Context

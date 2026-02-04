@@ -1,4 +1,4 @@
-package com.blackshark.hidperipheral;
+package tdynamos.usbtoblhid;
 
 import android.annotation.SuppressLint;
 import android.bluetooth.BluetoothAdapter;

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">HidPeripheral</string>
+    <string name="app_name">USBtoBLHid</string>
     <string name="ununited">The device is not connected.\nClick 「START」 button open bluetooth broadcast service</string>
     <string name="connected">The device is connected</string>
     <string name="mouse_left">LEFT</string>

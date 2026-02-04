@@ -4,10 +4,11 @@ plugins {
 }
 
 android {
+    namespace "tdynamos.usbtoblhid"
     compileSdk 32
 
     defaultConfig {
-        applicationId "com.blackshark.hidperipheral"
+        applicationId "tdynamos.usbtoblhid"
         minSdk 28
         targetSdk 32
         versionCode 1

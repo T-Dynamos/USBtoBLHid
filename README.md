@@ -1,26 +1,36 @@
-# HidPeripheral
-> Simulation Bluetooth HID Device(Mouse/Keyboard) for Android，Support 「Android、iOS、Windows...」 
+# USBtoBLHid
 
-### Register HID Device
+USB HID to Bluetooth HID converter app for Android.  
+It make any USB keyboard or mouse to become Bluetooth keyboard or mouse, by using Android device as bridge.
 
-```java
-BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-bluetoothAdapter.getProfileProxy(context, mProfileServiceListener, BluetoothProfile.HID_DEVICE);
+## What this project does
+- Take input from USB keyboard or USB mouse.
+- Send it as Bluetooth HID (keyboard + mouse) to other device.
+- So you can type or move on other device without cable.
 
-// SUBCLASS1_COMBO = MOUSE+KEYBOARD
-BluetoothHidDeviceAppSdpSettings sdp = new BluetoothHidDeviceAppSdpSettings(HidConsts.NAME, HidConsts.DESCRIPTION, HidConsts.PROVIDER, BluetoothHidDevice.SUBCLASS1_COMBO, HidConsts.Descriptor);
-mHidDevice.registerApp(sdp, null, null, Executors.newCachedThreadPool(), mCallback);
+## How it works
+- Android register as Bluetooth HID Device profile.
+- App listen for input events from connected USB devices.
+- App send HID reports over Bluetooth to the paired device.
+
+## Requirements
+- Android 9+ (API 28+).
+- Bluetooth need be enabled and device set discoverable to pair.
+- USB OTG and HUB needed for keyboard or mouse.
+
+## Build
+
+Use Gradle version 7.3.3.  
+Download link: [Gradle 7.3.3 binary](https://services.gradle.org/distributions/gradle-7.3.3-bin.zip) (unzip to get `./gradle/` folder).
+Example build and install command:
+
+```bash
+ANDROID_HOME=~/.buildozer/android/platform/android-sdk ./gradle/bin/gradle assembleDebug && adb install app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### iOS Device(Need to open the AssistiveTouch)
-System Setting -> Accessibility -> Touch -> AssistiveTouch
+## Note about input movement
+Reference for motion and input: `https://developer.android.com/develop/ui/views/touch-and-input/gestures/movement`
 
-### Screenshots
-![Mouse](screentshots/Mouse.png)
-![Keyboard](screentshots/Keyboard.png)
-
-### Notice
-In the process of my use, I found that there are some models cannot connect properly, and this situation needs to modify the corresponding configuration file in the Android system diagram.
-
-![Mouse](screentshots/Notice.png)
-
+## Original author and attribution
+This project is based on original work: `https://github.com/LiangLuDev/HidPeripheral`
+App icon credit: <a href="https://www.flaticon.com/free-icons/pointer" title="pointer icons">Pointer icons created by meaicon - Flaticon</a>
