@@ -9,6 +9,11 @@
   </tr>
 </table>
 
+<p>
+  Here is APK download link:
+  <a href="https://github.com/T-Dynamos/USBtoBLHid/releases/download/v1.0/app-release.apk">Download APK</a>
+</p>
+
 USB HID to Bluetooth HID converter app for Android. 
 
 Turn your wired USB keyboard and mouse into a Bluetooth keyboard and mouse by using an Android device as a bridge.

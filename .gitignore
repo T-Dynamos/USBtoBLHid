@@ -31,3 +31,5 @@ replay_pid*
 ### OS
 .DS_Store
 Thumbs.db
+keystore.properties
+usbtoBLHid.jks
