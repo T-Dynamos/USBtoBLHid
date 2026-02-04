@@ -1,7 +1,8 @@
 # USBtoBLHid
 
-USB HID to Bluetooth HID converter app for Android.  
-It make any USB keyboard or mouse to become Bluetooth keyboard or mouse, by using Android device as bridge.
+USB HID to Bluetooth HID converter app for Android. 
+
+Turn your wired USB keyboard and mouse into a Bluetooth keyboard and mouse by using an Android device as a bridge.
 
 ## What this project does
 - Take input from USB keyboard or USB mouse.
@@ -29,8 +30,11 @@ ANDROID_HOME=~/.buildozer/android/platform/android-sdk ./gradle/bin/gradle assem
 ```
 
 ## Note about input movement
-Reference for motion and input: `https://developer.android.com/develop/ui/views/touch-and-input/gestures/movement`
+
+Reference for motion and input: https://developer.android.com/develop/ui/views/touch-and-input/gestures/movement
 
 ## Original author and attribution
-This project is based on original work: `https://github.com/LiangLuDev/HidPeripheral`
+This project is based on original work: https://github.com/LiangLuDev/HidPeripheral
+
+
 App icon credit: <a href="https://www.flaticon.com/free-icons/pointer" title="pointer icons">Pointer icons created by meaicon - Flaticon</a>
