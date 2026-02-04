@@ -1,4 +1,7 @@
 # USBtoBLHid
+<p align="center">
+  <img src="cursor.png" alt="USBtoBLHid icon" width="160" />
+</p>
 
 USB HID to Bluetooth HID converter app for Android. 
 
